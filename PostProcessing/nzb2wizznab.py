@@ -184,11 +184,12 @@ Skript_dir = (os.path.dirname(os.path.abspath(os.environ['NZBPO_SCRIPT_DIR'])))
 git_repo = (os.path.join(Skript_dir, 'nzbget-scripts'))
 Repo.clone_from("https://github.com/cytec/nzbget-scripts", git_repo)
 Skript = (os.path.join(git_repo, 'PostProcessing', 'nzb2wizznab.py'))
+Version ="Version Beta: 3.7"
 with open(Skript , "r") as Skript_lines:
 	lines = Skript_lines.readlines()
 	last_line = lines[-1]
-	if "Version Beta: 3.7" in last_line:
-		print "[INFO] Das Skript wird mit der Neusten Version Gestartet"
+	if Version in last_line:
+		print "[INFO] Das Skript wird mit der Neusten Version Gestartet: [%s]" % (Version)
 		try:
 			shutil.rmtree(os.path.join(git_repo))
 		except OSError, e:
