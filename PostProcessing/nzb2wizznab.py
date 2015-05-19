@@ -7,15 +7,15 @@
 #
 # Dieses Script uploaded heruntergeladene NZB Files auf Wizznab
 #
-# NOTE: Dieses Script benoetigt python 2.7 und python-requests.
+# NOTE: Dieses Script benoetigt python 2.7, python-requests und GitPython.
 #
 # NOTE: Dieses Script benoetigt unter umstaenden zusaetzlich das Script Logger.py!.
 #
 # NOTE: Bitte nicht das Originale Logger.py Skript Verwenden!!!!.
 #
-# NOTE: Hier sind die Neusten Skript Versionen von Logger.py und nzb2wizznab.py https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing .
+# NOTE: Hier sind die Neusten Skript Versionen zu finden: Logger.py und nzb2wizznab.py https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing .
 #
-# NOTE: Version Beta: 3.7.
+# NOTE: Version Beta: 3.8.
  
 ##############################################################################
 ### OPTIONS                                                                ###
@@ -172,23 +172,22 @@ print('[INFO] Script nzbget2wizznab erfolgreich gestartet')
  
 if os.environ.has_key('NZBPP_TOTALSTATUS'):
     if not os.environ['NZBPP_TOTALSTATUS'] == 'SUCCESS':
-        print "[ERROR] Skript Abbruch wegen: [%s]." % (os.environ['NZBPP_STATUS'])
+        print "[ERROR] Skript Abbruch wegen: [Total Status] [%s]." % (os.environ['NZBPP_STATUS'])
         sys.exit(POSTPROCESS_ERROR)
         
 if os.environ.has_key('NZBPP_SCRIPTSTATUS'):
     if not ((os.environ['NZBPP_SCRIPTSTATUS'] == 'SUCCESS') or (os.environ['NZBPP_SCRIPTSTATUS'] == 'NONE')):
-        print "[ERROR] Skript Abbruch wegen: [%s]." % (os.environ['NZBPP_SCRIPTSTATUS'])
+        print "[ERROR] Skript Abbruch wegen: [Script Status] [%s]." % (os.environ['NZBPP_SCRIPTSTATUS'])
         sys.exit(POSTPROCESS_ERROR)
         
 Skript_dir = (os.path.dirname(os.path.abspath(os.environ['NZBPO_SCRIPT_DIR'])))
 git_repo = (os.path.join(Skript_dir, 'nzbget-scripts'))
 Repo.clone_from("https://github.com/cytec/nzbget-scripts", git_repo)
 Skript = (os.path.join(git_repo, 'PostProcessing', 'nzb2wizznab.py'))
-Version = "Version Beta: 3.7"
+Version = "Version Beta: 3.8"
 with open(Skript , "r") as Skript_lines:
-	lines = Skript_lines.readlines()
-	last_line = lines[-1]
-	if Version in last_line:
+	lines = Skript_lines.readlines()[17]
+	if Version in lines:
 		print "[INFO] Das Skript wird mit der Neusten Version Gestartet: [%s]" % (Version)
 		try:
 			shutil.rmtree(os.path.join(git_repo))
@@ -1018,4 +1017,3 @@ elif (os.environ['NZBPO_PASSWORD_LISTE']) == "DISABLED" or (os.environ['NZBPO_PA
 else:
 	print "[ERROR] Fehler bei der Ausfuehrung des Skripts!! [Passwort:[%s] - Passwort_WEB_UI:[%s]]...." % ((os.environ['NZBPO_PASSWORD']), (os.environ['NZBPR_*Unpack:Password']))
 	sys.exit(POSTPROCESS_ERROR)
-#Version Beta: 3.7.
