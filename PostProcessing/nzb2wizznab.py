@@ -15,7 +15,7 @@
 #
 # NOTE: Hier sind die Neusten Skript Versionen zu finden: Logger.py und nzb2wizznab.py https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing .
 #
-# NOTE: Version Beta: 3.9.
+# NOTE: Version Beta: 3.8.
  
 ##############################################################################
 ### OPTIONS                                                                ###
@@ -28,13 +28,6 @@
 # Hier muesst ihr bitte den Pfad eintragen in welchem Ordner sich dieses Skript befindet.
 # Als Beispiel siehe oben!!!.
 #SCRIPT_DIR=/volume1/01_public/nzbget2wizznab.py
-
-## Auto Update
-
-# AutoUpdate NZBGet2Wizznab Skript (ENABLED, DISABLED).
-#
-# Aktivierung oder Deaktivierung fuer das Automatische Update des Skripts.
-#AUTO_UPDATE=DISABLED
 
 ## NZB Dir
 
@@ -187,60 +180,27 @@ if os.environ.has_key('NZBPP_SCRIPTSTATUS'):
         print "[ERROR] Skript Abbruch wegen: [Script Status] [%s]." % (os.environ['NZBPP_SCRIPTSTATUS'])
         sys.exit(POSTPROCESS_ERROR)
         
-Version = "Version Beta: 3.9"
-if (os.environ['NZBPO_AUTO_UPDATE']) == "ENABLED":
-	Skript_dir = (os.path.dirname(os.path.abspath(os.environ['NZBPO_SCRIPT_DIR'])))
-	git_repo = (os.path.join(Skript_dir, 'nzbget-scripts'))
-	Repo.clone_from("https://github.com/cytec/nzbget-scripts", git_repo)
-	Skript = (os.path.join(git_repo, 'PostProcessing', 'nzb2wizznab.py'))
-	with open(Skript , "r") as Skript_lines:
-		lines = Skript_lines.readlines()[17]
-		if Version in lines:
-			print "[INFO] Das Skript wird mit der Neusten Version Gestartet: [%s]" % (Version)
-			try:
-				Skript_lines.close()
-				shutil.rmtree(os.path.join(git_repo))
-			except OSError, e:
-				print ("Error: %s - %s." % (e.filename,e.strerror))
-				sys.exit(POSTPROCESS_ERROR)
-		else:
-			Skript_lines.close()
-			print "[INFO] Das Skript wird nun Automatisch geupdatet."
-			try:
-				shutil.move((os.path.join(Skript)), (os.path.join(os.environ['NZBPO_SCRIPT_DIR'])))
-				try:
-					shutil.rmtree(os.path.join(git_repo))
-				except OSError, e:
-					print ("Error: %s - %s." % (e.filename,e.strerror))
-					sys.exit(POSTPROCESS_ERROR)
-			except OSError, e:
-				print ("Error: %s - %s." % (e.filename,e.strerror))
-				sys.exit(POSTPROCESS_ERROR)
-			print "[INFO] Das Skript Wurde Erfolgreich von: [%s] geupdatet: %s" % (Version, lines)
-
-elif (os.environ['NZBPO_AUTO_UPDATE']) == "DISABLED":
-	Skript_dir = (os.path.dirname(os.path.abspath(os.environ['NZBPO_SCRIPT_DIR'])))
-	git_repo = (os.path.join(Skript_dir, 'nzbget-scripts'))
-	Repo.clone_from("https://github.com/cytec/nzbget-scripts", git_repo)
-	Skript = (os.path.join(git_repo, 'PostProcessing', 'nzb2wizznab.py'))
-	with open(Skript , "r") as Skript_lines:
-		lines = Skript_lines.readlines()[17]
-		if Version in lines:
-			print "[INFO] Das Skript wird mit der Neusten Version Gestartet: [%s]" % (Version)
-			try:
-				shutil.rmtree(os.path.join(git_repo))
-			except OSError, e:
-				print ("Error: %s - %s." % (e.filename,e.strerror))
-				sys.exit(POSTPROCESS_ERROR)
-		else:
-			print "[WARNING] Bitte UPDATEN unter [ https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing ] die Neuste Version Downloaden"
-			print "[WARNING] Verwendete Version: [%s] Aktuelle Version: %s" % (Version, lines)
-			try:
-				shutil.rmtree(os.path.join(git_repo))
-			except OSError, e:
-				print ("Error: %s - %s." % (e.filename,e.strerror))
-				sys.exit(POSTPROCESS_ERROR)
-	Skript_lines.close()
+Skript_dir = (os.path.dirname(os.path.abspath(os.environ['NZBPO_SCRIPT_DIR'])))
+git_repo = (os.path.join(Skript_dir, 'nzbget-scripts'))
+Repo.clone_from("https://github.com/cytec/nzbget-scripts", git_repo)
+Skript = (os.path.join(git_repo, 'PostProcessing', 'nzb2wizznab.py'))
+Version = "Version Beta: 3.8"
+with open(Skript , "r") as Skript_lines:
+	lines = Skript_lines.readlines()[17]
+	if Version in lines:
+		print "[INFO] Das Skript wird mit der Neusten Version Gestartet: [%s]" % (Version)
+		try:
+			shutil.rmtree(os.path.join(git_repo))
+		except OSError, e:
+			print ("Error: %s - %s." % (e.filename,e.strerror))
+			sys.exit(POSTPROCESS_ERROR)
+	else:
+		print "[WARNING] Bitte UPDATEN unter [ https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing ] die Neuste Version Downloaden"
+		try:
+			shutil.rmtree(os.path.join(git_repo))
+		except OSError, e:
+			print ("Error: %s - %s." % (e.filename,e.strerror))
+			sys.exit(POSTPROCESS_ERROR)
         
 #Einlesen der Parameter
 NZB_DIR = (os.environ['NZBPO_NZB_DIR'])
