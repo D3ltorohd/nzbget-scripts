@@ -1,0 +1,28 @@
+# --- CONFIG STARTS HERE ---
+# This is a sample configuration file for VCS generated automatically
+# from the command-line with the "--generate config" command-line option
+# Save it to ~/.vcs.conf or ~/.vcs/vcs.conf to make it the default
+# configuration.
+# OR
+# Save it to ~/.vcs/profiles/something.conf to create a profile named
+# "something". To use this profile run vcs with the "--profile something"
+# (or "-p something") option
+# OR
+# Save it to "something.conf" and load it with "--config something.conf"
+# (or "-C something.conf")
+numcaps=24
+columns=4
+disable_shadows=1
+bg_heading=black
+bg_sign=black
+bg_contact=black
+fg_heading=white
+fg_sign=white
+font_all=OpenSansSemibold
+timecode_from=$TC_NUMCAPS
+height=160
+padding=0
+anonymous=1
+# vcs:conf:
+# Generated on Wed May 20 14:31:56 CEST 2015
+# --- CONFIG ENDS HERE --- 
