@@ -15,7 +15,7 @@
 #
 # NOTE: Hier sind die Neusten Skript Versionen zu finden: Logger.py und nzb2wizznab.py https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing .
 #
-# NOTE: Version Beta: 3.8.
+# NOTE: Version Beta: 3.9.
  
 ##############################################################################
 ### OPTIONS                                                                ###
@@ -147,7 +147,7 @@ POSTPROCESS_ERROR=94
 
 if not os.environ.has_key('NZBOP_SCRIPTDIR'):
     print "[ERROR] Dieses Skript kann nur von NZBGet (13.0 oder neuer) ausgefuehrt werden."
-    sys.exit(POSTPROCESS_ERROR)
+    sys.exit(POSTPROCESS_ERROR)  
   
 if os.environ['NZBOP_VERSION'][0:5] < '13.0':
     print "[ERROR] NZBGet Version %s wird nicht unterstuetzt. Bitte NZBGet updaten." % (str(os.environ['NZBOP_VERSION']))
@@ -173,18 +173,60 @@ print('[INFO] Script nzbget2wizznab erfolgreich gestartet')
 if os.environ.has_key('NZBPP_TOTALSTATUS'):
     if not os.environ['NZBPP_TOTALSTATUS'] == 'SUCCESS':
         print "[ERROR] Skript Abbruch wegen: [Total Status] [%s]." % (os.environ['NZBPP_STATUS'])
-        sys.exit(POSTPROCESS_ERROR)
+        if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+		print "[INFO] TEMP Dateien loeschen aktiviert"
+		if os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+			print "[INFO] TEMP Dateien gefunden und werden geloescht"
+			try:
+				remove = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+				os.remove(remove)
+				print "[INFO] TEMP Dateien erfolgreich geloescht"
+				sys.exit(POSTPROCESS_ERROR)
+			except OSError, e:
+					print ("Error: %s - %s." % (e.filename,e.strerror))
+					sys.exit(POSTPROCESS_ERROR)
+			
+		elif not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+			print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+			sys.exit(POSTPROCESS_ERROR)
+		else:
+			print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+			sys.exit(POSTPROCESS_ERROR)
+	elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+		print "[INFO] TEMP Dateien loeschen deaktiviert"
+		sys.exit(POSTPROCESS_ERROR)
         
 if os.environ.has_key('NZBPP_SCRIPTSTATUS'):
     if not ((os.environ['NZBPP_SCRIPTSTATUS'] == 'SUCCESS') or (os.environ['NZBPP_SCRIPTSTATUS'] == 'NONE')):
         print "[ERROR] Skript Abbruch wegen: [Script Status] [%s]." % (os.environ['NZBPP_SCRIPTSTATUS'])
-        sys.exit(POSTPROCESS_ERROR)
+        if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+		print "[INFO] TEMP Dateien loeschen aktiviert"
+		if os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+			print "[INFO] TEMP Dateien gefunden und werden geloescht"
+			try:
+				remove = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+				os.remove(remove)
+				print "[INFO] TEMP Dateien erfolgreich geloescht"
+				sys.exit(POSTPROCESS_ERROR)
+			except OSError, e:
+					print ("Error: %s - %s." % (e.filename,e.strerror))
+					sys.exit(POSTPROCESS_ERROR)
+			
+		elif not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+			print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+			sys.exit(POSTPROCESS_ERROR)
+		else:
+			print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+			sys.exit(POSTPROCESS_ERROR)
+	elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+		print "[INFO] TEMP Dateien loeschen deaktiviert"
+		sys.exit(POSTPROCESS_ERROR)
         
 Skript_dir = (os.path.dirname(os.path.abspath(os.environ['NZBPO_SCRIPT_DIR'])))
 git_repo = (os.path.join(Skript_dir, 'nzbget-scripts'))
 Repo.clone_from("https://github.com/cytec/nzbget-scripts", git_repo)
 Skript = (os.path.join(git_repo, 'PostProcessing', 'nzb2wizznab.py'))
-Version = "Version Beta: 3.8"
+Version = "Version Beta: 3.9"
 with open(Skript , "r") as Skript_lines:
 	lines = Skript_lines.readlines()[17]
 	if Version in lines:
@@ -213,194 +255,24 @@ if (os.environ['NZBPO_PASSWORD']) == "ENABLED" and ('NZBPR_*Unpack:Password' in 
 		print "[ERROR] Der Pfad von [%s] ist nicht vorhanden. Bitte kontrollieren!..." % (os.environ['NZBPO_NZB_DIR'])
 		sys.exit(POSTPROCESS_ERROR)
 	PASSWORD = (os.environ['NZBPR_*Unpack:Password'])
-	nzb_filename = (os.environ['NZBPP_NZBFILENAME'])
 	file_name_zur_pruefung_password = "{{%s}}.nzb" % (PASSWORD.rstrip())
-	if (file_name_zur_pruefung_password) in (nzb_filename):
-		print "[INFO] Passwort von Web Ui: [%s] ist im NZB Namen erhalten keine erweiterte Umbenennung noetig...." % (os.environ['NZBPR_*Unpack:Password'])
-		nzb_filepath = os.path.join(NZB_DIR, nzb_filename)
-		f = open(nzb_filepath + '.queued', 'rb')
-		file_content = f.read()
-		f.close()
-		print "[INFO] uploading file [%s]..." % nzb_filepath
-		post_data = {
-			"apikey": APIKEY,
-		}
-		myfile = {"Filedata": (nzb_filename, file_content)}
-		print requests.post(UPLOAD_URL, data=post_data, files=myfile).text
-		if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
-			print "[INFO] TEMP Dateien loeschen aktiviert"
-			if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-				print "[INFO] TEMP Dateien gefunden und werden geloescht"
-				try:
-					remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-					remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-					os.remove(remove)
-					os.remove(remove1)
-					print "[INFO] TEMP Dateien erfolgreich geloescht"
-					sys.exit(POSTPROCESS_SUCCESS)
-				except OSError, e:
-					print ("Error: %s - %s." % (e.filename,e.strerror))
-					sys.exit(POSTPROCESS_ERROR)
-			elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-				try:
-					remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-					os.remove(remove1)
-					print "[INFO] TEMP Dateien erfolgreich geloescht"
-					sys.exit(POSTPROCESS_SUCCESS)
-				except OSError, e:
-					print ("Error: %s - %s." % (e.filename,e.strerror))
-					sys.exit(POSTPROCESS_ERROR)
-			elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
-				print "[INFO] TEMP Dateien gefunden und werden geloescht"
-				try:
-					remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-					os.remove(remove)
-					print "[INFO] TEMP Dateien erfolgreich geloescht"
-					sys.exit(POSTPROCESS_SUCCESS)
-				except OSError, e:
-					print ("Error: %s - %s." % (e.filename,e.strerror))
-					sys.exit(POSTPROCESS_ERROR)
-			elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-				print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
-				print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-				sys.exit(POSTPROCESS_SUCCESS)
-			else:
-				print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
-				sys.exit(POSTPROCESS_ERROR)
-		elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
-			print "[INFO] TEMP Dateien loeschen deaktiviert"
-			sys.exit(POSTPROCESS_SUCCESS)
-	elif not (file_name_zur_pruefung_password) in (nzb_filename):
-		print "[INFO] Passwort von Web Ui stimmt nicht mit dem Passwort im NZB Namen ueberein erweiterte Umbenennung wird eingeleitet...."
-		PASSWORD = (os.environ['NZBPR_*Unpack:Password'])
-		nzb_filename = (os.environ['NZBPP_NZBFILENAME'])
-		nzb_filepath = os.path.join(NZB_DIR, nzb_filename)
-		nzb_without_extension = (os.environ['NZBPP_NZBNAME'])
-		nzb_new_file_path_web_interface = (os.environ['NZBPO_NZB_DIR_NEW'])	
-		file_old = "%s.nzb.queued" % (nzb_without_extension)
-		if (('{{' in nzb_filename) and ('}}' in nzb_filename)):
-			print "[INFO] Passwort im NZB Namen gefunden Entfernung und Umbenennung wird eingeleitet..."
-			altes_passwort_suchen = re.match( r'^.*?\{\{[ ]?(.*?)[ ]?\}\}', nzb_without_extension)
-			passwort_alt = "{{%s}}" % (altes_passwort_suchen.group(1))
-			ohne_passwort = nzb_without_extension.replace(passwort_alt, "").rstrip()
-			newname = "%s {{%s}}.nzb" % (ohne_passwort, PASSWORD.rstrip())
-			nzb_new_file_path = os.path.join(nzb_new_file_path_web_interface, newname)
-			print "[INFO] NZB File wird umbenannt in[%s {{%s}}.nzb]" % (ohne_passwort, PASSWORD.rstrip())
-			os.rename(os.path.join(NZB_DIR, file_old), os.path.join(nzb_new_file_path_web_interface, newname))
-			f = open(nzb_new_file_path)
-			file_content = f.read()
-			f.close()
-			print "[INFO] uploading file [%s]..." % nzb_new_file_path 
-			post_data = {
-				"apikey": APIKEY,
-			}
-			myfile = {"Filedata": (newname, file_content)}
-			print requests.post(UPLOAD_URL, data=post_data, files=myfile).text
-			if (os.environ['NZBPO_DELETE_NZB']) == "ENABLED":
-				print "[INFO] NZB Dateien loeschen aktiviert"
-				os_path_isfile = "%s/%s" % (nzb_new_file_path_web_interface, newname)
-				if os.path.isfile(os_path_isfile):
-					print "[INFO] NZB Dateien gefunden und werden geloescht..."
-					try:
-						remove = ("%s/%s") % (nzb_new_file_path_web_interface, newname)
-						os.remove(remove)
-						print "[INFO] NZB Dateien erfolgreich geloescht"
-					except OSError, e:
-						print ("Error: %s - %s." % (e.filename,e.strerror))
-						sys.exit(POSTPROCESS_ERROR)
-					if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
-						print "[INFO] TEMP Dateien loeschen aktiviert"
-						if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove)
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							try:
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								os.remove(remove)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
-							print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-							sys.exit(POSTPROCESS_SUCCESS)
-						else:
-							print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
-							sys.exit(POSTPROCESS_ERROR)
-					elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
-						print "[INFO] TEMP Dateien loeschen deaktiviert"
-						sys.exit(POSTPROCESS_SUCCESS)
-				elif not os.path.isfile(os_path_isfile):
-					print "[WARNING] Keine NZB Dateien gefunden....."
-					if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
-						print "[INFO] TEMP Dateien loeschen aktiviert"
-						if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove)
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							try:
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								os.remove(remove)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
-							print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-							sys.exit(POSTPROCESS_SUCCESS)
-						else:
-							print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
-							sys.exit(POSTPROCESS_ERROR)
-					elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
-						print "[INFO] TEMP Dateien loeschen deaktiviert"
-						sys.exit(POSTPROCESS_SUCCESS)
-					else:
-						print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Ueberpruefung der Pfade Fehlerhaft: [%s] - [%s]" % (os_path_isfile, (os.environ['NZBPO_NZB_DIR_NEW']))
-						sys.exit(POSTPROCESS_ERROR)
-			elif (os.environ['NZBPO_DELETE_NZB']) == "DISABLED":
-				print "[INFO] NZB Dateien loeschen deaktiviert"
+	name_nzbget = (os.environ['NZBPP_NZBNAME'])
+	list_nzb_dir = (os.listdir(NZB_DIR))
+	for liste_nzb_dir in list_nzb_dir:
+		if (name_nzbget) in (liste_nzb_dir):
+			nzb_filename = (os.path.join(NZB_DIR, liste_nzb_dir))
+			if (file_name_zur_pruefung_password) in (nzb_filename):
+				print "[INFO] Passwort von Web Ui: [%s] ist im NZB Namen erhalten keine erweiterte Umbenennung noetig...." % (os.environ['NZBPR_*Unpack:Password'])
+				nzb_filepath = os.path.join(NZB_DIR, nzb_filename)
+				f = open(nzb_filepath)
+				file_content = f.read()
+				f.close()
+				print "[INFO] uploading file [%s]..." % nzb_filepath
+				post_data = {
+					"apikey": APIKEY,
+				}
+				myfile = {"Filedata": (nzb_filename, file_content)}
+				print requests.post(UPLOAD_URL, data=post_data, files=myfile).text
 				if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
 					print "[INFO] TEMP Dateien loeschen aktiviert"
 					if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
@@ -444,187 +316,362 @@ if (os.environ['NZBPO_PASSWORD']) == "ENABLED" and ('NZBPR_*Unpack:Password' in 
 				elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
 					print "[INFO] TEMP Dateien loeschen deaktiviert"
 					sys.exit(POSTPROCESS_SUCCESS)
-				else:
-					print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Loeschen Fehler NZB: [%s]" % (os.environ['NZBPO_DELETE_NZB'])
-					sys.exit(POSTPROCESS_ERROR)
-		elif not (('{{' in nzb_filename) and ('}}' in nzb_filename)):
-			print "[INFO] Passwort von Web Ui nicht im NZB Namen gefunden Umbenennung wird eingeleitet!!"
-			newname = "%s {{%s}}.nzb" % (nzb_without_extension, PASSWORD.rstrip())
-			nzb_new_file_path = os.path.join(nzb_new_file_path_web_interface, newname)
-			print "[INFO] NZB File wird umbenannt in: [%s {{%s}}.nzb]" % (nzb_without_extension, PASSWORD.rstrip())
-			os.rename(os.path.join(NZB_DIR, file_old), os.path.join(nzb_new_file_path_web_interface, newname))
-			f = open(nzb_new_file_path)
-			file_content = f.read()
-			f.close()
-			print "[INFO] uploading file [%s]..." % nzb_new_file_path 
-			post_data = {
-				"apikey": APIKEY,
-			}
-			myfile = {"Filedata": (newname, file_content)}
-			print requests.post(UPLOAD_URL, data=post_data, files=myfile).text
-			if (os.environ['NZBPO_DELETE_NZB']) == "ENABLED":
-				print "[INFO] NZB Dateien loeschen aktiviert"
-				os_path_isfile = "%s/%s" % (nzb_new_file_path_web_interface, newname)
-				if os.path.isfile(os_path_isfile):
-					print "[INFO] NZB Dateien gefunden und werden geloescht..."
-					try:
-						remove = ("%s/%s") % (nzb_new_file_path_web_interface, newname)
-						os.remove(remove)
-						print "[INFO] NZB Dateien erfolgreich geloescht"
-					except OSError, e:
-						print ("Error: %s - %s." % (e.filename,e.strerror))
-						sys.exit(POSTPROCESS_ERROR)
-					if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
-						print "[INFO] TEMP Dateien loeschen aktiviert"
-						if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove)
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
+			elif not (file_name_zur_pruefung_password) in (nzb_filename):
+				print "[INFO] Passwort von Web Ui stimmt nicht mit dem Passwort im NZB Namen ueberein erweiterte Umbenennung wird eingeleitet...."
+				for liste_nzb_dir in list_nzb_dir:
+					if (name_nzbget) in (liste_nzb_dir):
+						nzb_filename = (os.path.join(NZB_DIR, liste_nzb_dir))
+						PASSWORD = (os.environ['NZBPR_*Unpack:Password'])
+						nzb_filepath = os.path.join(NZB_DIR, nzb_filename)
+						nzb_new_file_path_web_interface = (os.environ['NZBPO_NZB_DIR_NEW'])
+						file_old = (os.path.basename(nzb_filepath))
+						if (('{{' in nzb_filename) and ('}}' in nzb_filename)):
+							print "[INFO] Passwort im NZB Namen gefunden Entfernung und Umbenennung wird eingeleitet..."
+							altes_passwort_suchen = re.match( r'^.*?\{\{[ ]?(.*?)[ ]?\}\}', file_old)
+							passwort_alt = "{{%s}}" % (altes_passwort_suchen.group(1))
+							ohne_passwort = file_old.replace(passwort_alt, "").rstrip()
+							newname = "%s {{%s}}" % (ohne_passwort, PASSWORD.rstrip())
+							nzb_new_file_path = os.path.join(nzb_new_file_path_web_interface, newname)
+							print "[INFO] NZB File wird umbenannt in[%s {{%s}}]" % (ohne_passwort, PASSWORD.rstrip())
+							os.rename(os.path.join(NZB_DIR, file_old), os.path.join(nzb_new_file_path_web_interface, newname))
+							f = open(nzb_new_file_path)
+							file_content = f.read()
+							f.close()
+							print "[INFO] uploading file [%s]..." % nzb_new_file_path 
+							post_data = {
+								"apikey": APIKEY,
+							}
+							myfile = {"Filedata": (newname, file_content)}
+							print requests.post(UPLOAD_URL, data=post_data, files=myfile).text
+							if (os.environ['NZBPO_DELETE_NZB']) == "ENABLED":
+								print "[INFO] NZB Dateien loeschen aktiviert"
+								os_path_isfile = "%s/%s" % (nzb_new_file_path_web_interface, newname)
+								if os.path.isfile(os_path_isfile):
+									print "[INFO] NZB Dateien gefunden und werden geloescht..."
+									try:
+										remove = ("%s/%s") % (nzb_new_file_path_web_interface, newname)
+										os.remove(remove)
+										print "[INFO] NZB Dateien erfolgreich geloescht"
+									except OSError, e:
+										print ("Error: %s - %s." % (e.filename,e.strerror))
+										sys.exit(POSTPROCESS_ERROR)
+									if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+										print "[INFO] TEMP Dateien loeschen aktiviert"
+										if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove)
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											try:
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												os.remove(remove)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
+											print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											sys.exit(POSTPROCESS_SUCCESS)
+										else:
+											print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+											sys.exit(POSTPROCESS_ERROR)
+									elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+										print "[INFO] TEMP Dateien loeschen deaktiviert"
+										sys.exit(POSTPROCESS_SUCCESS)
+								elif not os.path.isfile(os_path_isfile):
+									print "[WARNING] Keine NZB Dateien gefunden....."
+									if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+										print "[INFO] TEMP Dateien loeschen aktiviert"
+										if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove)
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											try:
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												os.remove(remove)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
+											print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											sys.exit(POSTPROCESS_SUCCESS)
+										else:
+											print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+											sys.exit(POSTPROCESS_ERROR)
+									elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+										print "[INFO] TEMP Dateien loeschen deaktiviert"
+										sys.exit(POSTPROCESS_SUCCESS)
+									else:
+										print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Ueberpruefung der Pfade Fehlerhaft: [%s] - [%s]" % (os_path_isfile, (os.environ['NZBPO_NZB_DIR_NEW']))
+										sys.exit(POSTPROCESS_ERROR)
+							elif (os.environ['NZBPO_DELETE_NZB']) == "DISABLED":
+								print "[INFO] NZB Dateien loeschen deaktiviert"
+								if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+									print "[INFO] TEMP Dateien loeschen aktiviert"
+									if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+										print "[INFO] TEMP Dateien gefunden und werden geloescht"
+										try:
+											remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+											remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											os.remove(remove)
+											os.remove(remove1)
+											print "[INFO] TEMP Dateien erfolgreich geloescht"
+											sys.exit(POSTPROCESS_SUCCESS)
+										except OSError, e:
+											print ("Error: %s - %s." % (e.filename,e.strerror))
+											sys.exit(POSTPROCESS_ERROR)
+									elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+										try:
+											remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											os.remove(remove1)
+											print "[INFO] TEMP Dateien erfolgreich geloescht"
+											sys.exit(POSTPROCESS_SUCCESS)
+										except OSError, e:
+											print ("Error: %s - %s." % (e.filename,e.strerror))
+											sys.exit(POSTPROCESS_ERROR)
+									elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
+										print "[INFO] TEMP Dateien gefunden und werden geloescht"
+										try:
+											remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+											os.remove(remove)
+											print "[INFO] TEMP Dateien erfolgreich geloescht"
+											sys.exit(POSTPROCESS_SUCCESS)
+										except OSError, e:
+											print ("Error: %s - %s." % (e.filename,e.strerror))
+											sys.exit(POSTPROCESS_ERROR)
+									elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+										print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
+										print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+										sys.exit(POSTPROCESS_SUCCESS)
+									else:
+										print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+										sys.exit(POSTPROCESS_ERROR)
+								elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+									print "[INFO] TEMP Dateien loeschen deaktiviert"
+									sys.exit(POSTPROCESS_SUCCESS)
+								else:
+									print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Loeschen Fehler NZB: [%s]" % (os.environ['NZBPO_DELETE_NZB'])
+									sys.exit(POSTPROCESS_ERROR)
+						elif not (('{{' in nzb_filename) and ('}}' in nzb_filename)):
+							print "[INFO] Passwort von Web Ui nicht im NZB Namen gefunden Umbenennung wird eingeleitet!!"
+							newname = "%s {{%s}}.nzb" % (nzb_without_extension, PASSWORD.rstrip())
+							nzb_new_file_path = os.path.join(nzb_new_file_path_web_interface, newname)
+							print "[INFO] NZB File wird umbenannt in: [%s {{%s}}.nzb]" % (nzb_without_extension, PASSWORD.rstrip())
+							os.rename(os.path.join(NZB_DIR, file_old), os.path.join(nzb_new_file_path_web_interface, newname))
+							f = open(nzb_new_file_path)
+							file_content = f.read()
+							f.close()
+							print "[INFO] uploading file [%s]..." % nzb_new_file_path 
+							post_data = {
+								"apikey": APIKEY,
+							}
+							myfile = {"Filedata": (newname, file_content)}
+							print requests.post(UPLOAD_URL, data=post_data, files=myfile).text
+							if (os.environ['NZBPO_DELETE_NZB']) == "ENABLED":
+								print "[INFO] NZB Dateien loeschen aktiviert"
+								os_path_isfile = "%s/%s" % (nzb_new_file_path_web_interface, newname)
+								if os.path.isfile(os_path_isfile):
+									print "[INFO] NZB Dateien gefunden und werden geloescht..."
+									try:
+										remove = ("%s/%s") % (nzb_new_file_path_web_interface, newname)
+										os.remove(remove)
+										print "[INFO] NZB Dateien erfolgreich geloescht"
+									except OSError, e:
+										print ("Error: %s - %s." % (e.filename,e.strerror))
+										sys.exit(POSTPROCESS_ERROR)
+									if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+										print "[INFO] TEMP Dateien loeschen aktiviert"
+										if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove)
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											try:
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												os.remove(remove)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
+											print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											sys.exit(POSTPROCESS_SUCCESS)
+										else:
+											print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+											sys.exit(POSTPROCESS_ERROR)
+									elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+										print "[INFO] TEMP Dateien loeschen deaktiviert"
+										sys.exit(POSTPROCESS_SUCCESS)
+								elif not os.path.isfile(os_path_isfile):
+									print "[WARNING] Keine NZB Dateien gefunden....."
+									if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+										print "[INFO] TEMP Dateien loeschen aktiviert"
+										if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove)
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											try:
+												remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+												os.remove(remove1)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
+											print "[INFO] TEMP Dateien gefunden und werden geloescht"
+											try:
+												remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+												os.remove(remove)
+												print "[INFO] TEMP Dateien erfolgreich geloescht"
+												sys.exit(POSTPROCESS_SUCCESS)
+											except OSError, e:
+												print ("Error: %s - %s." % (e.filename,e.strerror))
+												sys.exit(POSTPROCESS_ERROR)
+										elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+											print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
+											print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											sys.exit(POSTPROCESS_SUCCESS)
+										else:
+											print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+											sys.exit(POSTPROCESS_ERROR)
+									elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+										print "[INFO] TEMP Dateien loeschen deaktiviert"
+										sys.exit(POSTPROCESS_SUCCESS)
+									else:
+										print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... TEMP Loeschung [%s] FEHLER!!!" % (os.environ['NZBPO_DELETE_TEMP'])
+										sys.exit(POSTPROCESS_ERROR)
+								else:
+									print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Ueberpruefung der Pfade Fehlerhaft: [%s] - [%s]" % (os_path_isfile, (os.environ['NZBPO_NZB_DIR_NEW']))
+									sys.exit(POSTPROCESS_ERROR)
+							elif (os.environ['NZBPO_DELETE_NZB']) == "DISABLED":
+								print "[INFO] NZB Dateien loeschen deaktiviert"
+								if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
+									print "[INFO] TEMP Dateien gefunden und werden geloescht"
+									if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+										print "[INFO] TEMP Dateien gefunden und werden geloescht"
+										try:
+											remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+											remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											os.remove(remove)
+											os.remove(remove1)
+											print "[INFO] TEMP Dateien erfolgreich geloescht"
+											sys.exit(POSTPROCESS_SUCCESS)
+										except OSError, e:
+											print ("Error: %s - %s." % (e.filename,e.strerror))
+											sys.exit(POSTPROCESS_ERROR)
+									elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+										try:
+											remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+											os.remove(remove1)
+											print "[INFO] TEMP Dateien erfolgreich geloescht"
+											sys.exit(POSTPROCESS_SUCCESS)
+										except OSError, e:
+											print ("Error: %s - %s." % (e.filename,e.strerror))
+											sys.exit(POSTPROCESS_ERROR)
+									elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
+										print "[INFO] TEMP Dateien gefunden und werden geloescht"
+										try:
+											remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
+											os.remove(remove)
+											print "[INFO] TEMP Dateien erfolgreich geloescht"
+											sys.exit(POSTPROCESS_SUCCESS)
+										except OSError, e:
+											print ("Error: %s - %s." % (e.filename,e.strerror))
+											sys.exit(POSTPROCESS_ERROR)
+									elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
+										print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
+										print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
+										sys.exit(POSTPROCESS_SUCCESS)
+									else:
+										print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+										sys.exit(POSTPROCESS_ERROR)
+								elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
+									print "[INFO] TEMP Dateien loeschen deaktiviert"
+									sys.exit(POSTPROCESS_SUCCESS)
+								else:
+									print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Loeschen Fehler TEMP: [%s]" % (os.environ['NZBPO_DELETE_TEMP'])
+									sys.exit(POSTPROCESS_ERROR)
+							else:
+								print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Loeschen Fehler NZB: [%s]" % (os.environ['NZBPO_DELETE_NZB'])
 								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							try:
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								os.remove(remove)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
-							print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-							sys.exit(POSTPROCESS_SUCCESS)
 						else:
-							print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
+							print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Ueberpruefung ob Passwort vorhanden '{{' - '}}': [%s]" % (nzb_filename)
 							sys.exit(POSTPROCESS_ERROR)
-					elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
-						print "[INFO] TEMP Dateien loeschen deaktiviert"
-						sys.exit(POSTPROCESS_SUCCESS)
-				elif not os.path.isfile(os_path_isfile):
-					print "[WARNING] Keine NZB Dateien gefunden....."
-					if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
-						print "[INFO] TEMP Dateien loeschen aktiviert"
-						if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove)
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							try:
-								remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-								os.remove(remove1)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
-							print "[INFO] TEMP Dateien gefunden und werden geloescht"
-							try:
-								remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-								os.remove(remove)
-								print "[INFO] TEMP Dateien erfolgreich geloescht"
-								sys.exit(POSTPROCESS_SUCCESS)
-							except OSError, e:
-								print ("Error: %s - %s." % (e.filename,e.strerror))
-								sys.exit(POSTPROCESS_ERROR)
-						elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-							print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
-							print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-							sys.exit(POSTPROCESS_SUCCESS)
-						else:
-							print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
-							sys.exit(POSTPROCESS_ERROR)
-					elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
-						print "[INFO] TEMP Dateien loeschen deaktiviert"
-						sys.exit(POSTPROCESS_SUCCESS)
-					else:
-						print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... TEMP Loeschung [%s] FEHLER!!!" % (os.environ['NZBPO_DELETE_TEMP'])
-						sys.exit(POSTPROCESS_ERROR)
-				else:
-					print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Ueberpruefung der Pfade Fehlerhaft: [%s] - [%s]" % (os_path_isfile, (os.environ['NZBPO_NZB_DIR_NEW']))
-					sys.exit(POSTPROCESS_ERROR)
-			elif (os.environ['NZBPO_DELETE_NZB']) == "DISABLED":
-				print "[INFO] NZB Dateien loeschen deaktiviert"
-				if (os.environ['NZBPO_DELETE_TEMP']) == "ENABLED":
-					print "[INFO] TEMP Dateien gefunden und werden geloescht"
-					if os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-						print "[INFO] TEMP Dateien gefunden und werden geloescht"
-						try:
-							remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-							remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-							os.remove(remove)
-							os.remove(remove1)
-							print "[INFO] TEMP Dateien erfolgreich geloescht"
-							sys.exit(POSTPROCESS_SUCCESS)
-						except OSError, e:
-							print ("Error: %s - %s." % (e.filename,e.strerror))
-							sys.exit(POSTPROCESS_ERROR)
-					elif os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-						try:
-							remove1 = ("%s") % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-							os.remove(remove1)
-							print "[INFO] TEMP Dateien erfolgreich geloescht"
-							sys.exit(POSTPROCESS_SUCCESS)
-						except OSError, e:
-							print ("Error: %s - %s." % (e.filename,e.strerror))
-							sys.exit(POSTPROCESS_ERROR)
-					elif os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']):
-						print "[INFO] TEMP Dateien gefunden und werden geloescht"
-						try:
-							remove = ("%s") % (os.environ['NZBPO_PASSWORD_FILE'])
-							os.remove(remove)
-							print "[INFO] TEMP Dateien erfolgreich geloescht"
-							sys.exit(POSTPROCESS_SUCCESS)
-						except OSError, e:
-							print ("Error: %s - %s." % (e.filename,e.strerror))
-							sys.exit(POSTPROCESS_ERROR)
-					elif not os.path.isfile(os.environ['NZBPO_PASSWORD_FILE']) and not os.path.isfile(os.environ['NZBPO_LOGGER_FILE_PATH_NAME']):
-						print "[INFO] Keine Passwort Datei gefunden zum Loeschen: [%s]...." % (os.environ['NZBPO_PASSWORD_FILE'])
-						print "[INFO] Keine Datei von Logger.py gefunden zum loeschen: [%s]...." % (os.environ['NZBPO_LOGGER_FILE_PATH_NAME'])
-						sys.exit(POSTPROCESS_SUCCESS)
-					else:
-						print "[WARNING] Fehler bei der ausfuehrung des Skripts bezueglich des Loeschens....."
-						sys.exit(POSTPROCESS_ERROR)
-				elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
-					print "[INFO] TEMP Dateien loeschen deaktiviert"
-					sys.exit(POSTPROCESS_SUCCESS)
-				else:
-					print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Loeschen Fehler TEMP: [%s]" % (os.environ['NZBPO_DELETE_TEMP'])
-					sys.exit(POSTPROCESS_ERROR)
 			else:
-				print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Loeschen Fehler NZB: [%s]" % (os.environ['NZBPO_DELETE_NZB'])
+				print "[ERROR] Fehler bei der Ausfuehrung des Skripts!! Ueberpruefung ob Passwort vorhanden Allgemein: [%s] - [%s]...." % (file_name_zur_pruefung_password, nzb_filename)
 				sys.exit(POSTPROCESS_ERROR)
-		else:
-			print "[ERROR] Fehler bei der Ausfuehrung des Skripts!!.... Ueberpruefung ob Passwort vorhanden '{{' - '}}': [%s]" % (nzb_filename)
-			sys.exit(POSTPROCESS_ERROR)
-	else:
-		print "[ERROR] Fehler bei der Ausfuehrung des Skripts!! Ueberpruefung ob Passwort vorhanden Allgemein: [%s] - [%s]...." % (file_name_zur_pruefung_password, nzb_filename)
-		sys.exit(POSTPROCESS_ERROR)
 
 elif (os.environ['NZBPO_PASSWORD_LISTE']) == "ENABLED" and not ('NZBPR_*Unpack:Password' in os.environ):
 	print "[INFO] In der WEB UI wurde keine Passwort angegeben..."
