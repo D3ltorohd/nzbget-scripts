@@ -221,29 +221,7 @@ if os.environ.has_key('NZBPP_SCRIPTSTATUS'):
 	elif (os.environ['NZBPO_DELETE_TEMP']) == "DISABLED":
 		print "[INFO] TEMP Dateien loeschen deaktiviert"
 		sys.exit(POSTPROCESS_ERROR)
-        
-Skript_dir = (os.path.dirname(os.path.abspath(os.environ['NZBPO_SCRIPT_DIR'])))
-git_repo = (os.path.join(Skript_dir, 'nzbget-scripts'))
-Repo.clone_from("https://github.com/cytec/nzbget-scripts", git_repo)
-Skript = (os.path.join(git_repo, 'PostProcessing', 'nzb2wizznab.py'))
-Version = "Version Beta: 3.9"
-with open(Skript , "r") as Skript_lines:
-	lines = Skript_lines.readlines()[17]
-	if Version in lines:
-		print "[INFO] Das Skript wird mit der Neusten Version Gestartet: [%s]" % (Version)
-		try:
-			shutil.rmtree(os.path.join(git_repo))
-		except OSError, e:
-			print ("Error: %s - %s." % (e.filename,e.strerror))
-			sys.exit(POSTPROCESS_ERROR)
-	else:
-		print "[WARNING] Bitte UPDATEN unter [ https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing ] die Neuste Version Downloaden"
-		try:
-			shutil.rmtree(os.path.join(git_repo))
-		except OSError, e:
-			print ("Error: %s - %s." % (e.filename,e.strerror))
-			sys.exit(POSTPROCESS_ERROR)
-        
+
 #Einlesen der Parameter
 NZB_DIR = (os.environ['NZBPO_NZB_DIR'])
 APIKEY = (os.environ['NZBPO_APIKEY'])
