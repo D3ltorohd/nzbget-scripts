@@ -474,6 +474,7 @@ if (os.environ['NZBPO_PASSWORD']) == "ENABLED" and ('NZBPR_*Unpack:Password' in 
 									sys.exit(POSTPROCESS_ERROR)
 						elif not (('{{' in nzb_filename) and ('}}' in nzb_filename)):
 							print "[INFO] Passwort von Web Ui nicht im NZB Namen gefunden Umbenennung wird eingeleitet!!"
+							nzb_without_extension = (os.environ['NZBPP_NZBNAME'])
 							newname = "%s {{%s}}.nzb" % (nzb_without_extension, PASSWORD.rstrip())
 							nzb_new_file_path = os.path.join(nzb_new_file_path_web_interface, newname)
 							print "[INFO] NZB File wird umbenannt in: [%s {{%s}}.nzb]" % (nzb_without_extension, PASSWORD.rstrip())
