@@ -79,6 +79,11 @@
 #quiet=info
 
 
+# Output format (jpg, png)
+# 
+# define in which format the screencaps will be saved
+# format=png
+
 # Funky Mode (none, overlap, rotate, photoframe, polaroidframe, photos, polaroid, film, random).
 #
 # output modes in which the contact sheet gets a more informal look.
@@ -105,6 +110,18 @@ if os.environ['NZBOP_VERSION'][0:5] < '13.0':
     print "[ERROR] NZBGet Version %s wird nicht unterstuetzt. Bitte NZBGet updaten." % (str(os.environ['NZBOP_VERSION']))
     sys.exit(POSTPROCESS_ERROR)
    
+if not os.path.exists(os.environ.get('NZBPP_DIRECTORY')):
+    print "[ERROR] Directory does not exist!"
+    sys.exit(POSTPROCESS_ERROR)
+
+# if 'FAILURE' in os.environ['NZBPP_STATUS']:
+#     print "[ERROR] got status '%s' from NZBget. exiting" % os.environ['NZBPP_STATUS']
+#     sys.exit(POSTPROCESS_ERROR)
+
+if not os.environ['NZBPP_TOTALSTATUS'] == 'SUCCESS':
+    print "[ERROR] got status '%s' from NZBget. exiting" % os.environ['NZBPP_TOTALSTATUS']
+    sys.exit(POSTPROCESS_ERROR)
+
 #print "VideoContactSheet is run from NZBGet Version [%s]." % (str(os.environ['NZBOP_VERSION']))
 
 def buildOptions(current_file):
@@ -116,6 +133,7 @@ def buildOptions(current_file):
     #no color output!
     args.append('-Wc')
 
+    output_file = current_file + ".png"
     #if we have a config file use it, else create commands
     if os.environ.get('NZBPO_VCSCONF'):
         args.append('--config')
@@ -151,9 +169,12 @@ def buildOptions(current_file):
         if os.environ.get('NZBPO_FONT'):
             args.append('--override')
             args.append("font_all=%s" % os.environ.get('NZBPO_FONT'))
+        if os.environ.get('NZBPO_FORMAT') == "jpg":
+            args.append("-j")
+            output_file = current_file + ".jpg"
 
     args.append('--output')
-    args.append(current_file + ".png")
+    args.append(output_file)
     args.append(current_file)
     
     return args
@@ -168,7 +189,8 @@ def getMediaFiles():
     for root, dirnames, filenames in os.walk(os.environ['NZBPP_DIRECTORY']):
         for extension in mediaContainer:
             for filename in fnmatch.filter(filenames, '*%s' % extension):
-                matches.append(os.path.join(root, filename))
+                if not "-sample" in filename:
+                    matches.append(os.path.join(root, filename))
 
     return matches
 
