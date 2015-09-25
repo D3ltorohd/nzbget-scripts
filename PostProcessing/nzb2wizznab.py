@@ -11,7 +11,7 @@
 #
 # NOTE: Hier ist die Neuste Skript Versionen zu finden: https://github.com/cytec/nzbget-scripts/tree/master/PostProcessing .
 #
-# NOTE: Version: 4.5.
+# NOTE: Version: 4.6.
  
 ##############################################################################
 ### OPTIONS                                                                ###
@@ -187,6 +187,21 @@ def upload_release(releasename, filepath):
 		print "[ERROR] Bitte ApiKey angeben: [%s]." % (os.environ.get('NZBPO_APIKEY'))
 		sys.exit(POSTPROCESS_ERROR)
 		
+	if releasename.endswith('.queued'):
+		releasename=releasename.replace('.queued', '')
+		
+		f = open(filepath)
+		file_content = f.read()
+		f.close()
+	
+		print "[INFO] uploading file [%s]..." % (filepath)
+		post_data = {
+			"apikey": APIKEY,
+		}
+		myfile = {"Filedata": (releasename, file_content)}
+		
+		print requests.post(UPLOAD_URL, data=post_data, files=myfile).text.decode("utf8")
+		
 	f = open(filepath)
 	file_content = f.read()
 	f.close()
@@ -197,7 +212,7 @@ def upload_release(releasename, filepath):
 	}
 	myfile = {"Filedata": (releasename, file_content)}
 	
-	print requests.post(UPLOAD_URL, data=post_data, files=myfile).text
+	print requests.post(UPLOAD_URL, data=post_data, files=myfile).text.decode("utf8")
 
 # loeschen der NZB Datein nur im Ordner "NZB_DIR_NEW"
 def cleanup_nzb(releasepath, releasename):
@@ -407,7 +422,7 @@ elif os.environ.get('NZBPO_PASSWORD_LISTE') == "ENABLED" and not ('NZBPR_*Unpack
 		sys.exit(POSTPROCESS_ERROR)
 	
 	if not os.path.isdir(os.environ.get('NZBPO_NZB_DIR_NEW')):
-		print "[ERROR] Der Pfad von [%s] ist nicht vorhanden. Bitte kontrollieren!..." % (os.environ.get('NZBPO_NZB_DIR'))
+		print "[ERROR] Der Pfad von [%s] ist nicht vorhanden. Bitte kontrollieren!..." % (os.environ.get('NZBPO_NZB_DIR_NEW'))
 		sys.exit(POSTPROCESS_ERROR)
 		
 	if not os.environ.get('NZBPO_LOG_PW'):
@@ -431,6 +446,8 @@ elif os.environ.get('NZBPO_PASSWORD_LISTE') == "ENABLED" and not ('NZBPR_*Unpack
 	server = ServerProxy(rpcUrl)
 	postqueue = server.postqueue(10000)
 	log = postqueue[0]['Log']
+	print "[INFO] Messages von der NZB Datei werden eingelesen und verarbeitet."
+	print "[INFO] Passwortliste wird eingelesen und verarbeitet."
 	if len(log) > 0:
 		for entry in log:
 			log_content = ((u'%s\n' % (entry['Text'])).encode('utf8'))
@@ -521,6 +538,78 @@ elif os.environ.get('NZBPO_PASSWORD_LISTE') == "ENABLED" and not ('NZBPR_*Unpack
 							log_password()
 	else:
 		print "[ERROR] Fehler bei der Log ausfuehrung...."
+	
+	if os.environ.get('NZBPO_NZB_ORDNER_SUCHE') == "ENABLED":
+		print "[INFO] NZB Ordner Suche ist Aktiviert"
+		
+		# Hier wird das Verzeichnis aufgelistet mit den vorhandenen NZBs
+		list_dir_nzb = os.listdir(os.environ.get('NZBPO_NZB_DIR'))
+		list_ordner_nzb = next(os.walk(os.environ.get('NZBPO_NZB_DIR')))[1]
+		ordner_name1 = os.environ.get('NZBPO_NZB_ORDNER1')
+		ordner_name2 = os.environ.get('NZBPO_NZB_ORDNER2')
+		ordner_name3 = os.environ.get('NZBPO_NZB_ORDNER3')
+		ordner_name4 = os.environ.get('NZBPO_NZB_ORDNER4')
+		ordner_name5 = os.environ.get('NZBPO_NZB_ORDNER5')
+		
+		for ordner in ordner_name1, ordner_name2, ordner_name3, ordner_name4, ordner_name5:
+			if ordner in list_ordner_nzb:
+				ordner_path = os.path.join(os.environ.get('NZBPO_NZB_DIR'), ordner)
+				ordner_list = os.listdir(ordner_path)
+				for release_name in ordner_list:
+					for releasename in list_dir_nzb:
+						# Hier wird der Nzb Name mit dem Verzeichnis abgeglichen
+						NZB_NAME = os.environ.get('NZBPP_NZBNAME')
+						if NZB_NAME in releasename:
+												
+							# Passwort von Passwortliste was fuer das entpacken erfolgreich verwendet wurde
+							path_old = os.environ.get('NZBPO_NZB_DIR')
+							releasepath = os.environ.get('NZBPO_NZB_DIR_NEW')
+							nzb_without_extension = os.environ.get('NZBPP_NZBNAME')
+							file_old = "%s.nzb.queued" % (nzb_without_extension)
+							releasename = "%s.nzb" % (nzb_without_extension)
+							filepath = os.path.join(os.environ.get('NZBPO_NZB_DIR_NEW'), releasename)
+							print "[INFO] NZB File wird umbenannt in: [%s.nzb]" % (nzb_without_extension)
+							os.rename(os.path.join(path_old, file_old), os.path.join(filepath))
+						
+							# Upload ablauf	
+							upload_release(releasename, filepath)
+							cleanup_nzb(releasepath, releasename)
+							log_password()
+						
+						elif NZB_NAME in release_name:
+												
+							# Passwort von Passwortliste was fuer das entpacken erfolgreich verwendet wurde
+							path_old = os.environ.get('NZBPO_NZB_DIR')
+							releasepath = os.environ.get('NZBPO_NZB_DIR_NEW')
+							nzb_without_extension = os.environ.get('NZBPP_NZBNAME')
+							file_old = "%s.nzb.queued" % (nzb_without_extension)
+							releasename = "%s.nzb" % (nzb_without_extension)
+							filepath = os.path.join(os.environ.get('NZBPO_NZB_DIR_NEW'), releasename)
+							print "[INFO] NZB File wird umbenannt in: [%s.nzb]" % (nzb_without_extension)
+							os.rename(os.path.join(path_old, ordner, file_old), os.path.join(filepath))
+								
+							# Upload ablauf
+							upload_release(releasename, filepath)
+							cleanup_nzb(releasepath, releasename)
+							log_password()
+			
+	elif os.environ.get('NZBPO_NZB_ORDNER_SUCHE') == "DISABLED":
+		print "[INFO] NZB Ordner Suche ist deaktiviert"
+							
+		# Passwort von Passwortliste was fuer das entpacken erfolgreich verwendet wurde
+		path_old = os.environ.get('NZBPO_NZB_DIR')
+		releasepath = os.environ.get('NZBPO_NZB_DIR_NEW')
+		nzb_without_extension = os.environ.get('NZBPP_NZBNAME')
+		file_old = "%s.nzb.queued" % (nzb_without_extension)
+		releasename = "%s.nzb" % (nzb_without_extension)
+		filepath = os.path.join(os.environ.get('NZBPO_NZB_DIR_NEW'), releasename)
+		print "[INFO] NZB File wird umbenannt in: [%s.nzb]" % (nzb_without_extension)
+		os.rename(os.path.join(path_old, file_old), os.path.join(filepath))
+						
+		# Upload ablauf
+		upload_release(releasename, filepath)
+		cleanup_nzb(releasepath, releasename)
+		log_password()
 	
 elif os.environ.get('NZBPO_PASSWORD_LISTE') == "DISABLED" or os.environ.get('NZBPO_PASSWORD') == "DISABLED" and ('NZBPR_*Unpack:Password' in os.environ):
 	print "[INFO] Passwort: [%s] oder Passwort_Liste: [%s] deaktiviert, aber Passwort im Web Interface gegeben: [%s]" % (os.environ.get('NZBPO_PASSWORD') ,os.environ.get('NZBPO_PASSWORD_LISTE'), ('NZBPR_*Unpack:Password' in os.environ))
