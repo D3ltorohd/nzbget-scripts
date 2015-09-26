@@ -190,18 +190,6 @@ def upload_release(releasename, filepath):
 	if releasename.endswith('.queued'):
 		releasename=releasename.replace('.queued', '')
 		
-		f = open(filepath)
-		file_content = f.read()
-		f.close()
-	
-		print "[INFO] uploading file [%s]..." % (filepath)
-		post_data = {
-			"apikey": APIKEY,
-		}
-		myfile = {"Filedata": (releasename, file_content)}
-		
-		print requests.post(UPLOAD_URL, data=post_data, files=myfile).text.decode("utf8")
-		
 	f = open(filepath)
 	file_content = f.read()
 	f.close()
