@@ -599,8 +599,8 @@ elif os.environ.get('NZBPO_PASSWORD_LISTE') == "ENABLED" and not ('NZBPR_*Unpack
 elif os.environ.get('NZBPO_PASSWORD_LISTE') == "DISABLED" or os.environ.get('NZBPO_PASSWORD') == "DISABLED" and ('NZBPR_*Unpack:Password' in os.environ):
 	print "[INFO] Passwort: [%s] oder Passwort_Liste: [%s] deaktiviert, aber Passwort im Web Interface gegeben: [%s]" % (os.environ.get('NZBPO_PASSWORD') ,os.environ.get('NZBPO_PASSWORD_LISTE'), ('NZBPR_*Unpack:Password' in os.environ))
 	releasename = os.environ['NZBPP_NZBFILENAME']
-	filepath = os.path.join(NZB_DIR, nzb_filename)
 	releasepath = os.environ.get('NZBPO_NZB_DIR')
+	filepath = os.path.join(releasepath, nzb_filename)
 
 	upload_release(releasename, filepath)
 	cleanup_nzb(releasepath, releasename)
