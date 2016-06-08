@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 ##############################################################################
 ### NZBGET POST-PROCESSING SCRIPT                                          ###
- 
+
 # VideoContactSheet
 #
 # This script allows you to automatically create video contact sheets
@@ -10,15 +10,15 @@
 # NOTE: requires python 2.7.
 # NOTE: also requires vcs, ffmpeg and imagemagick to be installed and available in PATH.
 # NOTE: Version Beta: 0.1.
- 
+
 ##############################################################################
 ### OPTIONS                                                                ###
- 
+
 # PATH to vcs.
 #
 # absolute path to vcs if this is empty it must be in PATH
 #vcsBin=
- 
+
 # Additional PATH.
 #
 # Append this to the PATH before executing
@@ -36,7 +36,7 @@
 #vcsConf=
 
 # Number of Screens to capture
-# 
+#
 #numcaps=20
 
 # Disable Shadows (yes, no).
@@ -49,7 +49,7 @@
 # split images in x columns
 #columns=4
 
-# Height of the single captures 
+# Height of the single captures
 #
 # either % or absolute value in px
 #height=160
@@ -68,7 +68,7 @@
 #
 #timestamps=yes
 
-# Font to use 
+# Font to use
 #
 # either name or absolute path with .ttf
 #font=OpenSans
@@ -80,7 +80,7 @@
 
 
 # Output format (jpg, png)
-# 
+#
 # define in which format the screencaps will be saved
 # format=png
 
@@ -91,25 +91,25 @@
 
 ### NZBGET POST-PROCESSING SCRIPT                                          ###
 ##############################################################################
- 
+
 import sys
 import os
 import fnmatch
 import subprocess
- 
+
 # Exit codes used by NZBGet
 POSTPROCESS_SUCCESS=93
 POSTPROCESS_ERROR=94
 
- 
+
 if not os.environ.has_key('NZBOP_SCRIPTDIR'):
     print "[ERROR] Dieses Skript kann nur von NZBGet (13.0 oder neuer) ausgefuehrt werden."
     sys.exit(POSTPROCESS_ERROR)
- 
+
 if os.environ['NZBOP_VERSION'][0:5] < '13.0':
     print "[ERROR] NZBGet Version %s wird nicht unterstuetzt. Bitte NZBGet updaten." % (str(os.environ['NZBOP_VERSION']))
     sys.exit(POSTPROCESS_ERROR)
-   
+
 if not os.path.exists(os.environ.get('NZBPP_DIRECTORY')):
     print "[ERROR] Directory does not exist!"
     sys.exit(POSTPROCESS_ERROR)
@@ -176,7 +176,7 @@ def buildOptions(current_file):
     args.append('--output')
     args.append(output_file)
     args.append(current_file)
-    
+
     return args
 
 pathAppend = os.environ.get('NZBPO_ADDITIONALPATH')
@@ -208,7 +208,7 @@ def main():
         else:
             STATUS = POSTPROCESS_ERROR
             print "[ERROR] there went something wrong creating %s" % fname
-    
+
     sys.exit(STATUS)
 
 
